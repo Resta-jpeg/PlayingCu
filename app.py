@@ -39,4 +39,6 @@ if not st.session_state.authenticated:
 page = st.sidebar.selectbox(
     "📄 Go to Page",
     ("Dashboard", "Upload Data", "Finance Chatbot", "Settings")
+)
+
 
