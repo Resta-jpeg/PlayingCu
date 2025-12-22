@@ -36,3 +36,8 @@ if not st.session_state.authenticated:
         else:
             st.error("Invalid username or password")
     st.stop()
+
+page = st.sidebar.selectbox(
+    "📄 Go to Page",
+    ("Dashboard", "Upload Data", "Finance Chatbot", "Settings")
+
