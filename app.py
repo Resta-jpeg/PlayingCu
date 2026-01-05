@@ -1,108 +1,221 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-from datetime import datetime
 
-st.title("D4 Tools")
-st.title("Membantu kebutuhan kuliahmu!")
-# app.py
-import streamlit as st
-
-# Dummy user data (untuk simulasi login)
-USERS = {
-    "admin": "admin123",
-    "user1": "password1"
-}
-
-# Konfigurasi halaman
-st.set_page_config(page_title="Personal Finance Dashboard", layout="wide")
-
-# Inisialisasi session_state
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-if "username" not in st.session_state:
-    st.session_state.username = None
-if "data" not in st.session_state:
-    st.session_state.data = None
-
-# Login Page
-if not st.session_state.authenticated:
-    st.title("🔐 Login Page")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        if USERS.get(username) == password:
-            st.session_state.authenticated = True
-            st.session_state.username = username
-            st.success("Login successful!")
-            st.rerun()
-        else:
-            st.error("Invalid username or password")
-    st.stop()
-page = st.sidebar.selectbox(
-    "📄 Go to Page",
-    ("Dashboard", "Upload Data", "Finance Chatbot", "Settings")
+# =========================
+# KONFIGURASI HALAMAN
+# =========================
+st.set_page_config(
+    page_title="Kalkulator Kimia Analisis",
+    page_icon="⚗️",
+    layout="centered"
 )
 
-# Sample chatbot reply
-def finance_bot(question, df):
-    if df is None:
-        return "Please upload your data first."
-    if "pengeluaran terbesar" in question.lower():
-        max_row = df.loc[df["Amount"].idxmin()]
-        return f"Pengeluaran terbesar Anda adalah {abs(max_row['Amount']):,.0f} untuk {max_row['Category']} pada {max_row['Date']}."
-    return "Maaf, saya belum memahami pertanyaan Anda sepenuhnya."
+# =========================
+# CSS STYLE
+# =========================
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: linear-gradient(to right, #e3f2fd, #ffffff);
+    }
+    h1, h2, h3 {
+        color: #0d47a1;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
+# =========================
+# JUDUL APLIKASI
+# =========================
+st.title("🧪 Kalkulator Kimia Analisis")
+st.write("### Silakan pilih jenis perhitungan di bawah ini")
 
-# Dashboard Page
-if page == "Dashboard":
-    st.title("📊 Personal Finance Dashboard")
-    if st.session_state.data is None:
-        st.info("Please upload your transaction data first on the 'Upload Data' page.")
+# =========================
+# MENU UTAMA (SATU KALI)
+# =========================
+menu = st.selectbox(
+    "Pilih jenis perhitungan:",
+    (
+        "Faktor Pengenceran",
+        "Molaritas",
+        "Normalitas",
+        "Mg/L",
+        "% b/v",
+        "% b/b",
+        "% v/v"
+    )
+)
+
+st.markdown("---")
+
+# =========================
+# DATABASE Mr
+# =========================
+mr_database = {
+    "NaCl": 58.44,
+    "HCl": 36.46,
+    "H2SO4": 98.08,
+    "NaOH": 40.00,
+    "KOH": 56.11,
+    "CH3COOH": 60.05,
+    "NH3": 17.03,
+    "KMnO4": 158.04,
+    "AgNO3": 169.87,
+    "CaCO3": 100.09
+}
+
+# =====================================================
+# FAKTOR PENGENCERAN
+# =====================================================
+if menu == "Faktor Pengenceran":
+
+    st.subheader("⚗️ Faktor Pengenceran")
+
+    sub_menu = st.radio(
+        "Pilih perhitungan:",
+        ("Faktor pengenceran", "Volume yang harus diambil")
+    )
+
+    if sub_menu == "Faktor pengenceran":
+        volume_labu = st.number_input("Volume labu takar (mL)", min_value=0.0)
+        volume_pipet = st.number_input("Volume yang dipipet (mL)", min_value=0.0)
+
+        if st.button("Hitung"):
+            if volume_pipet == 0:
+                st.error("Volume pipet tidak boleh 0")
+            else:
+                hasil = volume_labu / volume_pipet
+                st.success(f"Faktor pengenceran = **{hasil:.3f}**")
+
     else:
-        df = st.session_state.data
-        total_income = df[df["Amount"] > 0]["Amount"].sum()
-        total_expense = df[df["Amount"] < 0]["Amount"].sum()
-        net_balance = total_income + total_expense
+        c1 = st.number_input("Konsentrasi awal", min_value=0.0)
+        c2 = st.number_input("Konsentrasi akhir", min_value=0.0)
+        v2 = st.number_input("Volume akhir (mL)", min_value=0.0)
 
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Total Income", f"Rp {total_income:,.0f}")
-        col2.metric("Total Expense", f"Rp {abs(total_expense):,.0f}")
-        col3.metric("Net Balance", f"Rp {net_balance:,.0f}")
+        if st.button("Hitung"):
+            if c1 == 0:
+                st.error("Konsentrasi awal tidak boleh 0")
+            else:
+                v1 = (c2 * v2) / c1
+                st.success(f"Volume yang diambil = **{v1:.3f} mL**")
 
-        st.subheader("📈 Monthly Expenses")
-        df["Month"] = pd.to_datetime(df["Date"]).dt.to_period("M").astype(str)
-        monthly = df[df["Amount"] < 0].groupby("Month")["Amount"].sum().reset_index()
-        fig = px.bar(monthly, x="Month", y="Amount", title="Monthly Expenses", labels={'Amount':'Total Expense'})
-        st.plotly_chart(fig, use_container_width=True)
+# =====================================================
+# MOLARITAS
+# =====================================================
+elif menu == "Molaritas":
 
-        st.subheader("📊 Expense by Category")
-        category = df[df["Amount"] < 0].groupby("Category")["Amount"].sum().reset_index()
-        fig2 = px.bar(category, x="Category", y="Amount", title="Expenses by Category", labels={'Amount':'Total Expense'})
-        st.plotly_chart(fig2, use_container_width=True)
+    st.subheader("⚗️ Perhitungan Molaritas")
 
+    metode = st.radio(
+        "Metode perhitungan:",
+        ("Input Mr manual", "Pilih dari database")
+    )
 
-# Upload Page
-elif page == "Upload Data":
-    st.title("📁 Upload Your Financial Transactions")
-    st.markdown("Format file: CSV dengan kolom `Date`, `Amount`, `Category`")
-    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
-    if uploaded_file:
-        try:
-            df = pd.read_csv(uploaded_file)
-            df["Date"] = pd.to_datetime(df["Date"])
-            st.dataframe(df.head())
-            st.session_state.data = df
-            st.success("Data uploaded successfully!")
-        except Exception as e:
-            st.error(f"Error loading data: {e}")
+    volume = st.number_input("Volume larutan (L)", min_value=0.0)
+    massa = st.number_input("Massa zat (gram)", min_value=0.0)
 
-# Chatbot Page
-elif page == "Finance Chatbot":
-    st.title("💬 Ask Our Finance Bot")
-    st.chat_message("assistant").write("Hi! Saya adalah FinanceBot. Tanyakan apapun seputar keuangan Anda!")
-    if prompt := st.chat_input("Tulis pertanyaan Anda..."):
-        st.chat_message("user").write(prompt)
-        response = finance_bot(prompt, st.session_state.data)
-        st.chat_message("assistant").write(response)
+    if metode == "Input Mr manual":
+        mr = st.number_input("Mr zat", min_value=0.0)
+    else:
+        senyawa = st.selectbox("Pilih senyawa", list(mr_database.keys()))
+        mr = mr_database[senyawa]
+        st.info(f"Mr {senyawa} = {mr}")
 
+    if st.button("Hitung"):
+        if volume == 0 or mr == 0:
+            st.error("Volume dan Mr tidak boleh 0")
+        else:
+            molaritas = massa / (mr * volume)
+            st.success(f"Molaritas = **{molaritas:.4f} M**")
+
+# =====================================================
+# NORMALITAS
+# =====================================================
+elif menu == "Normalitas":
+
+    st.subheader("⚗️ Perhitungan Normalitas")
+
+    volume = st.number_input("Volume larutan (L)", min_value=0.0)
+    massa = st.number_input("Massa zat (gram)", min_value=0.0)
+    faktor = st.number_input("Faktor ekivalen (n)", min_value=0.0)
+
+    senyawa = st.selectbox("Pilih senyawa", list(mr_database.keys()))
+    mr = mr_database[senyawa]
+    st.info(f"Mr {senyawa} = {mr}")
+
+    if st.button("Hitung"):
+        if volume == 0 or mr == 0 or faktor == 0:
+            st.error("Volume, Mr, dan faktor ekivalen tidak boleh 0")
+        else:
+            normalitas = (massa * faktor) / (mr * volume)
+            st.success(f"Normalitas = **{normalitas:.4f} N**")
+
+# =====================================================
+# Mg/L
+# =====================================================
+elif menu == "Mg/L":
+
+    st.subheader("⚗️ Konsentrasi mg/L")
+
+    massa = st.number_input("Massa zat (mg)", min_value=0.0)
+    volume = st.number_input("Volume larutan (L)", min_value=0.0)
+
+    if st.button("Hitung"):
+        if volume == 0:
+            st.error("Volume tidak boleh 0")
+        else:
+            hasil = massa / volume
+            st.success(f"Konsentrasi = **{hasil:.4f} mg/L**")
+
+# =====================================================
+# % b/v
+# =====================================================
+elif menu == "% b/v":
+
+    st.subheader("⚗️ % Berat/Volume")
+
+    massa = st.number_input("Massa zat (gram)", min_value=0.0)
+    volume = st.number_input("Volume larutan (mL)", min_value=0.0)
+
+    if st.button("Hitung"):
+        if volume == 0:
+            st.error("Volume tidak boleh 0")
+        else:
+            persen = (massa / volume) * 100
+            st.success(f"Konsentrasi = **{persen:.4f} % b/v**")
+
+# =====================================================
+# % b/b
+# =====================================================
+elif menu == "% b/b":
+
+    st.subheader("⚗️ % Berat/Berat")
+
+    massa_zat = st.number_input("Massa zat terlarut (gram)", min_value=0.0)
+    massa_total = st.number_input("Massa campuran (gram)", min_value=0.0)
+
+    if st.button("Hitung"):
+        if massa_total == 0:
+            st.error("Massa campuran tidak boleh 0")
+        else:
+            persen = (massa_zat / massa_total) * 100
+            st.success(f"Konsentrasi = **{persen:.4f} % b/b**")
+
+# =====================================================
+# % v/v
+# =====================================================
+elif menu == "% v/v":
+
+    st.subheader("⚗️ % Volume/Volume")
+
+    volume_zat = st.number_input("Volume zat terlarut (mL)", min_value=0.0)
+    volume_total = st.number_input("Volume larutan (mL)", min_value=0.0)
+
+    if st.button("Hitung"):
+        if volume_total == 0:
+            st.error("Volume larutan tidak boleh 0")
+        else:
+            persen = (volume_zat / volume_total) * 100
+            st.success(f"Konsentrasi = **{persen:.4f} % v/v**")
